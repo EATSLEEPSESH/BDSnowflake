@@ -60,25 +60,6 @@
 - SQL
 - DBeaver
 
-## Состав репозитория
-
-    .
-    ├── README.md
-    ├── docker-compose.yml
-    ├── load_mock_data.sql
-    ├── ddl.sql
-    ├── dml.sql
-    └── исходные данные/
-        ├── MOCK_DATA (1).csv
-        ├── MOCK_DATA (2).csv
-        ├── MOCK_DATA (3).csv
-        ├── MOCK_DATA (4).csv
-        ├── MOCK_DATA (5).csv
-        ├── MOCK_DATA (6).csv
-        ├── MOCK_DATA (7).csv
-        ├── MOCK_DATA (8).csv
-        ├── MOCK_DATA (9).csv
-        └── MOCK_DATA.csv
 
 ## Описание файлов
 
