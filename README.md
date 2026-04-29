@@ -238,6 +238,8 @@ erDiagram
     dim_category ||--o{ dim_product : "category_id"
     dim_material ||--o{ dim_product : "material_id"
     dim_pet_category ||--o{ dim_product : "pet_category_id"
+```
+
 ## Логика модели
 
 ### `dim_customer`
