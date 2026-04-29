@@ -1,10 +1,34 @@
 drop table if exists public.fact_sales cascade;
+drop table if exists public.dim_product cascade;
+drop table if exists public.dim_brand cascade;
+drop table if exists public.dim_category cascade;
+drop table if exists public.dim_material cascade;
+drop table if exists public.dim_pet_category cascade;
 drop table if exists public.dim_date cascade;
 drop table if exists public.dim_supplier cascade;
 drop table if exists public.dim_store cascade;
-drop table if exists public.dim_product cascade;
 drop table if exists public.dim_seller cascade;
 drop table if exists public.dim_customer cascade;
+
+create table public.dim_brand (
+    brand_id bigserial primary key,
+    brand_name text unique
+);
+
+create table public.dim_category (
+    category_id bigserial primary key,
+    category_name text unique
+);
+
+create table public.dim_material (
+    material_id bigserial primary key,
+    material_name text unique
+);
+
+create table public.dim_pet_category (
+    pet_category_id bigserial primary key,
+    pet_category_name text unique
+);
 
 create table public.dim_customer (
     customer_id bigint primary key,
@@ -26,25 +50,6 @@ create table public.dim_seller (
     seller_email text,
     seller_country text,
     seller_postal_code text
-);
-
-create table public.dim_product (
-    product_id bigint primary key,
-    product_name text,
-    product_category text,
-    product_price numeric(18,2),
-    product_quantity bigint,
-    pet_category text,
-    product_weight numeric(18,2),
-    product_color text,
-    product_size text,
-    product_brand text,
-    product_material text,
-    product_description text,
-    product_rating numeric(18,2),
-    product_reviews bigint,
-    product_release_date date,
-    product_expiry_date date
 );
 
 create table public.dim_store (
@@ -76,6 +81,25 @@ create table public.dim_date (
     month bigint,
     day bigint,
     quarter bigint
+);
+
+create table public.dim_product (
+    product_id bigint primary key,
+    product_name text,
+    product_price numeric(18,2),
+    product_quantity bigint,
+    product_weight numeric(18,2),
+    product_color text,
+    product_size text,
+    product_description text,
+    product_rating numeric(18,2),
+    product_reviews bigint,
+    product_release_date date,
+    product_expiry_date date,
+    brand_id bigint references public.dim_brand(brand_id),
+    category_id bigint references public.dim_category(category_id),
+    material_id bigint references public.dim_material(material_id),
+    pet_category_id bigint references public.dim_pet_category(pet_category_id)
 );
 
 create table public.fact_sales (
