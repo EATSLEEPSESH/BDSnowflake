@@ -1,12 +1,42 @@
-truncate table public.fact_sales restart identity cascade;
-truncate table public.dim_date restart identity cascade;
-truncate table public.dim_supplier restart identity cascade;
-truncate table public.dim_store restart identity cascade;
-truncate table public.dim_product restart identity cascade;
-truncate table public.dim_seller restart identity cascade;
-truncate table public.dim_customer restart identity cascade;
+TRUNCATE TABLE
+public.fact_sales,
+public.dim_product,
+public.dim_brand,
+public.dim_category,
+public.dim_material,
+public.dim_pet_category,
+public.dim_date,
+public.dim_supplier,
+public.dim_store,
+public.dim_seller,
+public.dim_customer
+RESTART IDENTITY CASCADE;
 
-insert into public.dim_customer (
+INSERT INTO public.dim_brand (brand_name)
+SELECT DISTINCT product_brand
+FROM public.mock_data
+WHERE product_brand IS NOT NULL
+ON CONFLICT (brand_name) DO NOTHING;
+
+INSERT INTO public.dim_category (category_name)
+SELECT DISTINCT product_category
+FROM public.mock_data
+WHERE product_category IS NOT NULL
+ON CONFLICT (category_name) DO NOTHING;
+
+INSERT INTO public.dim_material (material_name)
+SELECT DISTINCT product_material
+FROM public.mock_data
+WHERE product_material IS NOT NULL
+ON CONFLICT (material_name) DO NOTHING;
+
+INSERT INTO public.dim_pet_category (pet_category_name)
+SELECT DISTINCT pet_category
+FROM public.mock_data
+WHERE pet_category IS NOT NULL
+ON CONFLICT (pet_category_name) DO NOTHING;
+
+INSERT INTO public.dim_customer (
     customer_id,
     customer_first_name,
     customer_last_name,
@@ -18,7 +48,7 @@ insert into public.dim_customer (
     customer_pet_name,
     customer_pet_breed
 )
-select distinct on (sale_customer_id::bigint)
+SELECT DISTINCT ON (sale_customer_id::bigint)
     sale_customer_id::bigint,
     customer_first_name,
     customer_last_name,
@@ -29,11 +59,12 @@ select distinct on (sale_customer_id::bigint)
     customer_pet_type,
     customer_pet_name,
     customer_pet_breed
-from public.mock_data
-where sale_customer_id is not null
-order by sale_customer_id::bigint, id::bigint;
+FROM public.mock_data
+WHERE sale_customer_id IS NOT NULL
+ORDER BY sale_customer_id::bigint, id::bigint
+ON CONFLICT (customer_id) DO NOTHING;
 
-insert into public.dim_seller (
+INSERT INTO public.dim_seller (
     seller_id,
     seller_first_name,
     seller_last_name,
@@ -41,57 +72,19 @@ insert into public.dim_seller (
     seller_country,
     seller_postal_code
 )
-select distinct on (sale_seller_id::bigint)
+SELECT DISTINCT ON (sale_seller_id::bigint)
     sale_seller_id::bigint,
     seller_first_name,
     seller_last_name,
     seller_email,
     seller_country,
     seller_postal_code
-from public.mock_data
-where sale_seller_id is not null
-order by sale_seller_id::bigint, id::bigint;
+FROM public.mock_data
+WHERE sale_seller_id IS NOT NULL
+ORDER BY sale_seller_id::bigint, id::bigint
+ON CONFLICT (seller_id) DO NOTHING;
 
-insert into public.dim_product (
-    product_id,
-    product_name,
-    product_category,
-    product_price,
-    product_quantity,
-    pet_category,
-    product_weight,
-    product_color,
-    product_size,
-    product_brand,
-    product_material,
-    product_description,
-    product_rating,
-    product_reviews,
-    product_release_date,
-    product_expiry_date
-)
-select distinct on (sale_product_id::bigint)
-    sale_product_id::bigint,
-    product_name,
-    product_category,
-    product_price::numeric(18,2),
-    product_quantity::bigint,
-    pet_category,
-    product_weight::numeric(18,2),
-    product_color,
-    product_size,
-    product_brand,
-    product_material,
-    product_description,
-    product_rating::numeric(18,2),
-    product_reviews::bigint,
-    product_release_date::date,
-    product_expiry_date::date
-from public.mock_data
-where sale_product_id is not null
-order by sale_product_id::bigint, id::bigint;
-
-insert into public.dim_store (
+INSERT INTO public.dim_store (
     store_name,
     store_location,
     store_city,
@@ -100,7 +93,7 @@ insert into public.dim_store (
     store_phone,
     store_email
 )
-select distinct
+SELECT DISTINCT
     store_name,
     store_location,
     store_city,
@@ -108,9 +101,10 @@ select distinct
     store_country,
     store_phone,
     store_email
-from public.mock_data;
+FROM public.mock_data
+ON CONFLICT DO NOTHING;
 
-insert into public.dim_supplier (
+INSERT INTO public.dim_supplier (
     supplier_name,
     supplier_contact,
     supplier_email,
@@ -119,7 +113,7 @@ insert into public.dim_supplier (
     supplier_city,
     supplier_country
 )
-select distinct
+SELECT DISTINCT
     supplier_name,
     supplier_contact,
     supplier_email,
@@ -127,25 +121,71 @@ select distinct
     supplier_address,
     supplier_city,
     supplier_country
-from public.mock_data;
+FROM public.mock_data
+ON CONFLICT DO NOTHING;
 
-insert into public.dim_date (
+INSERT INTO public.dim_date (
     full_date,
     year,
     month,
     day,
     quarter
 )
-select distinct
+SELECT DISTINCT
     sale_date::date,
-    extract(year from sale_date::date)::bigint,
-    extract(month from sale_date::date)::bigint,
-    extract(day from sale_date::date)::bigint,
-    extract(quarter from sale_date::date)::bigint
-from public.mock_data
-where sale_date is not null;
+    EXTRACT(YEAR FROM sale_date::date)::bigint,
+    EXTRACT(MONTH FROM sale_date::date)::bigint,
+    EXTRACT(DAY FROM sale_date::date)::bigint,
+    EXTRACT(QUARTER FROM sale_date::date)::bigint
+FROM public.mock_data
+WHERE sale_date IS NOT NULL
+ON CONFLICT (full_date) DO NOTHING;
 
-insert into public.fact_sales (
+INSERT INTO public.dim_product (
+    product_id,
+    product_name,
+    product_price,
+    product_quantity,
+    product_weight,
+    product_color,
+    product_size,
+    product_description,
+    product_rating,
+    product_reviews,
+    product_release_date,
+    product_expiry_date,
+    brand_id,
+    category_id,
+    material_id,
+    pet_category_id
+)
+SELECT DISTINCT ON (m.sale_product_id::bigint)
+    m.sale_product_id::bigint,
+    m.product_name,
+    m.product_price::numeric(18,2),
+    m.product_quantity::bigint,
+    m.product_weight::numeric(18,2),
+    m.product_color,
+    m.product_size,
+    m.product_description,
+    m.product_rating::numeric(18,2),
+    m.product_reviews::bigint,
+    m.product_release_date::date,
+    m.product_expiry_date::date,
+    b.brand_id,
+    c.category_id,
+    mtr.material_id,
+    pc.pet_category_id
+FROM public.mock_data m
+LEFT JOIN public.dim_brand b ON m.product_brand = b.brand_name
+LEFT JOIN public.dim_category c ON m.product_category = c.category_name
+LEFT JOIN public.dim_material mtr ON m.product_material = mtr.material_name
+LEFT JOIN public.dim_pet_category pc ON m.pet_category = pc.pet_category_name
+WHERE m.sale_product_id IS NOT NULL
+ORDER BY m.sale_product_id::bigint, m.id::bigint
+ON CONFLICT (product_id) DO NOTHING;
+
+INSERT INTO public.fact_sales (
     sale_id,
     customer_id,
     seller_id,
@@ -159,11 +199,11 @@ insert into public.fact_sales (
     product_rating,
     product_reviews
 )
-select distinct on (m.id::bigint)
-    m.id::bigint as sale_id,
-    m.sale_customer_id::bigint as customer_id,
-    m.sale_seller_id::bigint as seller_id,
-    m.sale_product_id::bigint as product_id,
+SELECT
+    m.id::bigint,
+    m.sale_customer_id::bigint,
+    m.sale_seller_id::bigint,
+    m.sale_product_id::bigint,
     ds.store_id,
     dsp.supplier_id,
     dd.date_id,
@@ -172,24 +212,23 @@ select distinct on (m.id::bigint)
     m.product_price::numeric(18,2),
     m.product_rating::numeric(18,2),
     m.product_reviews::bigint
-from public.mock_data m
-left join public.dim_store ds
-    on m.store_name = ds.store_name
-   and m.store_location = ds.store_location
-   and m.store_city = ds.store_city
-   and m.store_state = ds.store_state
-   and m.store_country = ds.store_country
-   and m.store_phone = ds.store_phone
-   and m.store_email = ds.store_email
-left join public.dim_supplier dsp
-    on m.supplier_name = dsp.supplier_name
-   and m.supplier_contact = dsp.supplier_contact
-   and m.supplier_email = dsp.supplier_email
-   and m.supplier_phone = dsp.supplier_phone
-   and m.supplier_address = dsp.supplier_address
-   and m.supplier_city = dsp.supplier_city
-   and m.supplier_country = dsp.supplier_country
-left join public.dim_date dd
-    on m.sale_date::date = dd.full_date
-where m.id is not null
-order by m.id::bigint, m.sale_customer_id::bigint nulls last;
+FROM public.mock_data m
+LEFT JOIN public.dim_store ds
+    ON m.store_name = ds.store_name
+   AND m.store_location = ds.store_location
+   AND m.store_city = ds.store_city
+   AND m.store_state = ds.store_state
+   AND m.store_country = ds.store_country
+   AND m.store_phone = ds.store_phone
+   AND m.store_email = ds.store_email
+LEFT JOIN public.dim_supplier dsp
+    ON m.supplier_name = dsp.supplier_name
+   AND m.supplier_contact = dsp.supplier_contact
+   AND m.supplier_email = dsp.supplier_email
+   AND m.supplier_phone = dsp.supplier_phone
+   AND m.supplier_address = dsp.supplier_address
+   AND m.supplier_city = dsp.supplier_city
+   AND m.supplier_country = dsp.supplier_country
+LEFT JOIN public.dim_date dd
+    ON m.sale_date::date = dd.full_date
+ON CONFLICT (sale_id) DO NOTHING;
